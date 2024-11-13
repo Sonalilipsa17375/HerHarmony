@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
-// import 11 from '../../assets/images/quizphotos'; // Ensure this imports correctly
+import { useRouter } from 'expo-router';
 
 const questions = [
   "Do you often experience painful menstrual cramps that disrupt your daily activities?",
@@ -14,9 +14,32 @@ const questions = [
   "Are you experiencing symptoms such as acne, bloating, breast tenderness, cramping, cravings, fatigue, headaches, low sex drive, or mood swings?",
 ];
 
-const QuizScreen = ({ navigation }) => {
+const images = {
+  question1: { yes: require('../../assets/images/quizphotos/11.jpeg'), no: require('../../assets/images/quizphotos/12.jpeg') },
+  question2: { yes: require('../../assets/images/quizphotos/31.jpeg'), no: require('../../assets/images/quizphotos/32.jpeg') },
+  question3: { yes: require('../../assets/images/quizphotos/41.jpeg'), no: require('../../assets/images/quizphotos/42.jpeg') },
+  question4: { yes: require('../../assets/images/quizphotos/52.jpeg'), no: require('../../assets/images/quizphotos/51.jpeg') },
+  question5: { yes: require('../../assets/images/quizphotos/61.jpeg'), no: require('../../assets/images/quizphotos/62.jpeg') },
+  question6: { yes: require('../../assets/images/quizphotos/71.jpeg'), no: require('../../assets/images/quizphotos/72.jpeg') },
+  question7: { yes: require('../../assets/images/quizphotos/81.jpeg'), no: require('../../assets/images/quizphotos/82 .jpeg') },
+  question8: { yes: require('../../assets/images/quizphotos/81.jpeg'), no: require('../../assets/images/quizphotos/62.jpeg') },
+};
+
+const QuizScreen = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
+  const [mappedAnswers, setMappedAnswers] = useState([]); // Array to store Yes/No answers for each question
+  const router = useRouter();
+
+  useEffect(() => {
+    if (currentQuestion === questions.length) {
+      // Once all questions are answered, push the mappedAnswers to the result page
+      router.push({
+        pathname: '/Result',
+        params: { mappedAnswers },
+      });
+    }
+  }, [currentQuestion, mappedAnswers, router]);
 
   const handleAnswer = (answer) => {
     setAnswers((prevAnswers) => ({
@@ -24,12 +47,30 @@ const QuizScreen = ({ navigation }) => {
       [currentQuestion]: answer,
     }));
 
+    // Add mapped Yes/No answer to the mappedAnswers array
+    setMappedAnswers((prevMappedAnswers) => [
+      ...prevMappedAnswers,
+      { question: currentQuestion, answer: answer === 'yes' ? 'Yes' : 'No' },
+    ]);
+
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
-    } else {
-      navigation.navigate('Result', { answers });
     }
   };
+
+  const currentImages = currentQuestion < questions.length && images[`question${currentQuestion + 1}`]
+    ? images[`question${currentQuestion + 1}`]
+    : null;
+
+  useEffect(() => {
+    if (!currentImages) {
+      router.replace('./Result');
+    }
+  }, [currentImages, router]);
+
+  if (!currentImages) {
+    return null;
+  }
 
   return (
     <View style={styles.container}>
@@ -37,15 +78,13 @@ const QuizScreen = ({ navigation }) => {
         <Text style={styles.questionText}>{questions[currentQuestion]}</Text>
       </View>
       <View style={styles.optionsContainer}>
-        {/* Yes Option */}
         <TouchableOpacity style={styles.optionBlock} onPress={() => handleAnswer('yes')}>
-          <Image source={quizphotos.yesImage} style={styles.optionImage} />
+          <Image source={currentImages.yes} style={styles.optionImage} />
           <Text style={styles.optionText}>Yes</Text>
         </TouchableOpacity>
 
-        {/* No Option */}
         <TouchableOpacity style={styles.optionBlock} onPress={() => handleAnswer('no')}>
-          <Image source={quizphotos.noImage} style={styles.optionImage} />
+          <Image source={currentImages.no} style={styles.optionImage} />
           <Text style={styles.optionText}>No</Text>
         </TouchableOpacity>
       </View>
@@ -59,12 +98,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#FFF9C4', // Light yellow background
+    backgroundColor: '#FFF9C4',
   },
   questionBlock: {
     marginBottom: 30,
     padding: 20,
-    backgroundColor: '#3E2723', // Dark color for question block
+    backgroundColor: '#3E2723',
     borderRadius: 12,
     width: '100%',
   },
@@ -80,8 +119,8 @@ const styles = StyleSheet.create({
   },
   optionBlock: {
     alignItems: 'center',
-    padding: 10,
-    backgroundColor: '#FFF3E0', // Light color for options
+    padding: 15,
+    backgroundColor: '#FFF3E0',
     borderRadius: 10,
     width: 120,
     shadowColor: '#000',
@@ -91,8 +130,8 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   optionImage: {
-    width: 60,
-    height: 60,
+    width: 100,
+    height: 150,
     marginBottom: 10,
   },
   optionText: {
